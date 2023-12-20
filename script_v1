@@ -67,7 +67,7 @@ VP_afterQC <- VlnPlot(seurat.combi, features = c("nFeature_RNA", "nCount_RNA", "
 
 
 
-# Plot an elbow plot to visualize the selection (Sanity check)
+# Plot an elbow plot to visualize the selection
 Seurat::ElbowPlot(seurat.combi, ndims= 30) + ylab("variance explained (%)") 
 
 #{r clustering using harmony and run UMAP}
@@ -93,7 +93,6 @@ seurat.combi <- seurat.combi %>%
   identity()
 
 
-
 seurat.combi <- seurat.combi %>% 
   RunUMAP(reduction = "harmony", dims = 1:24) %>% 
   FindNeighbors(reduction = "harmony", dims = 1:24) %>% 
@@ -102,8 +101,9 @@ seurat.combi <- seurat.combi %>%
 
 
 cx3cr1_stim<-FeaturePlot(object = seurat.combi, features = "Cx3cr1",split.by = "stim")
-
 p2ry12_stim<-FeaturePlot(object = seurat.combi, features = "P2ry12",split.by = "stim")
+Mrc1_stim<-FeaturePlot(object = seurat.combi, features = "Mrc1",split.by = "stim")
+Ms4a7_stim<-FeaturePlot(object = seurat.combi, features = "Ms4a7",split.by = "stim")
 
 
 ####Cluster Specific Signatures ####
@@ -129,7 +129,8 @@ Markers %>%
 
 DoHeatmap(seurat.combi_scaled, features = top40$gene) + NoLegend()
 
-DoHeatmap(subset(seurat.combi_scaled2,downsample =900), features = heatmapmarkersFinal, size = 3,group.bar = TRUE)
+DoHeatmap(subset(seurat.combi_scaled2), features = heatmapmarkersFinal, size = 3,group.bar = TRUE)
+DoHeatmap(subset(seurat.combi_scaled2), features = Markers1, size = 3,group.bar = TRUE)
 
 
 levels(seurat.combi)
@@ -141,16 +142,14 @@ combi_named1 <- RenameIdents(seurat.combi, clusters_annotated)
 
 n_cellsM <- FetchData(combi_named1, 
                       
-                      vars = c("ident","stim")) %>%
+  vars = c("ident","stim")) %>%
   dplyr::count(ident,stim) %>% 
   spread(ident, n) 
-
-write_xlsx(n_cellsM, "CellNumberByClusterCombi_NAMED.xlsx")
 
 
 plot_list <- FeaturePlot(
   seurat.combi,
-  features=c("P2ry12","Cx3cr1","Hexb","Mrc1","Ms4a7","Cd9","Trem2","Cd68","Lamp1","Tnfrsf21","Ifngr1","Ifnar2"),
+  features=c("P2ry12","Cx3cr1","Hexb","Mrc1","Ms4a7","Trem2"),
   combine=FALSE, cols=viridis(256),
   max.cutoff='q98',
   reduction = "tsne"
@@ -165,7 +164,6 @@ pal <- viridis(n = 10, option = "C", direction = -1)
 # Create Plots
 
 FeaturePlot_scCustom(seurat_object = combi_named1, features = "Trem2", colors_use = pal,reduction = "tsne")
-
 
 
 Ex<-c("Fos","Junb","Egr1","Hspa1a")
@@ -200,7 +198,6 @@ DefaultAssay(combi_named1) <- "RNA"
 microglia.1<- subset(combi_named1, idents = c("MI"))
 Idents(microglia.1) <- "stim"
 avg.microglia.1 <- log1p(AverageExpression(microglia.1, verbose = FALSE)$RNA)
-avg.microglia.1<-as.data.frame(avg.microglia.1)
 avg.microglia.1$gene <- rownames(avg.microglia.1)
 
 DEG.1 <- FindMarkers(microglia.1, ident.1 = "HABmale", ident.2 = "HABfemale", verbose = FALSE, test.use = "DESeq2")
@@ -212,7 +209,6 @@ write_xlsx(DEG.1, "MI_HABmaleVSfemale.Expr.xlsx")
 microglia.3<- subset(combi_named1, idents = c("MIII"))
 Idents(microglia.3) <- "stim"
 avg.microglia.3 <- log1p(AverageExpression(microglia.3, verbose = FALSE)$RNA)
-avg.microglia.3<-as.data.frame(avg.microglia.3)
 avg.microglia.3$gene <- rownames(avg.microglia.3)
 
 DEG.2 <- FindMarkers(microglia.3, ident.1 = "HABmale", ident.2 = "HABfemale", verbose = FALSE, test.use = "DESeq2")
@@ -225,7 +221,6 @@ write_xlsx(DEG.2, "MIII_HABmaleVSfemale.Expr.xlsx")
 microglia.2<- subset(combi_named1, idents = c("MI"))
 Idents(microglia.2) <- "stim"
 avg.microglia.2 <- log1p(AverageExpression(microglia.2, verbose = FALSE)$RNA)
-avg.microglia.2<-as.data.frame(avg.microglia.2)
 avg.microglia.2$gene <- rownames(avg.microglia.2)
 
 DEG.3 <- FindMarkers(microglia.2, ident.1 = "HABmale", ident.2 = "NABmale", verbose = FALSE, test.use = "DESeq2")
@@ -233,17 +228,5 @@ head(DEG.3, n = 100)
 
 DEG.3$Genes<-rownames(DEG.3)
 write_xlsx(DEG.2, "3HABmaleVSNABmale.Expr.xlsx")
-
-microglia.4<- subset(combi_named1, idents = c("MI"))
-Idents(microglia.4) <- "stim"
-avg.microglia.4 <- log1p(AverageExpression(microglia.4, verbose = FALSE)$RNA)
-avg.microglia.4 <-as.data.frame(avg.microglia.4)
-avg.microglia.4$gene <- rownames(avg.microglia.4)
-
-DEG.4 <- FindMarkers(microglia.4, ident.1 = "HABfemale", ident.2 = "NABfemale", verbose = FALSE, test.use = "DESeq2")
-head(DEG.4, n = 100)
-
-DEG.4$Genes<-rownames(DEG.4)
-write_xlsx(DEG.4, "4HABmaleVSNABmale.Expr.xlsx")
 
 
